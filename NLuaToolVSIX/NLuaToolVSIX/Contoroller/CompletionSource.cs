@@ -412,7 +412,7 @@ namespace OokLanguage
 
                     completionSets.Add(new CompletionSet("All", "All", applicableTo, completions, Enumerable.Empty<Completion>()));
                 }
-            }
+            }           
             else
             {
                 string end = line.GetText().ToLower();
@@ -447,6 +447,7 @@ namespace OokLanguage
 
                 if (completions.Count > 0)
                 {
+                    start = triggerPoint - cmd.Length;
 
                     var applicableTo = snapshot.CreateTrackingSpan(new SnapshotSpan(start, triggerPoint), SpanTrackingMode.EdgeInclusive);
 
