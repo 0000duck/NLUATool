@@ -89,8 +89,8 @@ namespace OokLanguage
                 return typeof(System.Net.Http.WebRequestHandler).Assembly;
             else if (namespaces.IndexOf("System.Net.Drawing") >= 0)
                 return typeof(System.Drawing.Graphics).Assembly;
-            else if (namespaces.IndexOf("System.Windows.Froms") >= 0)
-                return typeof(System.Windows.Forms.Application).Assembly;
+            else if (namespaces.IndexOf("System.Windows.Forms") >= 0)
+                return typeof(System.Windows.Forms.MessageBox).Assembly;
             else if (namespaces.IndexOf("System.Xaml") >= 0)
                 return typeof(System.Xaml.XamlReader).Assembly;
             else if (namespaces.IndexOf("System.Xml.Linq") >= 0)
