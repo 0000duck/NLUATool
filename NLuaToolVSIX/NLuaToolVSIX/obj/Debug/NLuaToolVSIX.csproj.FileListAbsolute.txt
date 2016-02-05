@@ -53,3 +53,4 @@ N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\bin\Debug\zh-Hans\Microsoft.VisualStudi
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\obj\Debug\NLuaToolVSIX.dll
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\obj\Debug\NLuaToolVSIX.pdb
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\obj\Debug\extension.vsixmanifest
+N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\obj\Debug\NLuaToolVSIX.csprojResolveAssemblyReference.cache

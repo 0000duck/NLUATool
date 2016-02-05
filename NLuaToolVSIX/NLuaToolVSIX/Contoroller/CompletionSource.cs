@@ -75,14 +75,59 @@ namespace OokLanguage
         }
 
 
+        public static Assembly GetAssembly(string namespaces)
+        {
+            if (namespaces.IndexOf("System.IO") >= 0)
+                return typeof(System.IO.File).Assembly;
+            else if (namespaces.IndexOf("System.Net.Socket") >= 0)
+                return typeof(System.Net.Sockets.Socket).Assembly;
+            else if (namespaces.IndexOf("System.Net") >= 0)
+                return typeof(System.Net.WebClient).Assembly;
+            else if (namespaces.IndexOf("System.Net.Http") >= 0)
+                return typeof(System.Net.Http.HttpClient).Assembly;
+            else if (namespaces.IndexOf("System.Net.Http.WebRequest") >= 0)
+                return typeof(System.Net.Http.WebRequestHandler).Assembly;
+            else if (namespaces.IndexOf("System.Net.Drawing") >= 0)
+                return typeof(System.Drawing.Graphics).Assembly;
+            else if (namespaces.IndexOf("System.Windows.Froms") >= 0)
+                return typeof(System.Windows.Forms.Application).Assembly;
+            else if (namespaces.IndexOf("System.Xaml") >= 0)
+                return typeof(System.Xaml.XamlReader).Assembly;
+            else if (namespaces.IndexOf("System.Xml.Linq") >= 0)
+                return typeof(System.Xml.Linq.XDocument).Assembly;
+            else if (namespaces.IndexOf("System.Xml.Serialization") >= 0)
+                return typeof(System.Xml.Serialization.XmlAttributes).Assembly;
+            else if (namespaces.IndexOf("System.Xml") >= 0)
+                return typeof(System.Xml.XmlElement).Assembly;
+            else if (namespaces.IndexOf("System.Configuration") >= 0)
+                return typeof(System.Configuration.Configuration).Assembly;
+            else if (namespaces.IndexOf("System.Configuration.Install") >= 0)
+                return typeof(System.Configuration.Install.Installer).Assembly;
+            else
+                return typeof(IntPtr).Assembly;
+
+        }
+
 
         public static void LoadingNameSpace(string namespaces)
         {
-            //var types= Assembly.LoadWithPartialName(namespaces);
+            namespaces = namespaces.Trim();
 
-           // if (types == null)
-              var  types = typeof(string).Assembly;
-            LoadingNameSpace(types, namespaces);
+            if (string.IsNullOrEmpty(namespaces))
+                return;
+
+            var types = GetAssembly(namespaces);
+
+            if (types == null)
+            {
+                types = typeof(String).Assembly;
+                LoadingNameSpace(types, namespaces);
+            }
+            else
+            {
+                LoadingNameSpace(types, namespaces);               
+            }
+           
         }
 
         public static void LoadingNameSpace(Assembly assembly,string namespaces)
