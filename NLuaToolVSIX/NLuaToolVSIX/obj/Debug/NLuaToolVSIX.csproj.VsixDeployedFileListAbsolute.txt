@@ -1,0 +1,3 @@
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\NLuaToolVSIX.dll
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\NLuaToolVSIX.pdb
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\extension.vsixmanifest
