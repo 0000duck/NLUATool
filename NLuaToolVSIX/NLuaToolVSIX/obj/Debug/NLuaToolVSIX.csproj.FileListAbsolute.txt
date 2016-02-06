@@ -53,7 +53,6 @@ N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\bin\Debug\zh-Hans\Microsoft.VisualStudi
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\obj\Debug\NLuaToolVSIX.dll
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\obj\Debug\NLuaToolVSIX.pdb
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\obj\Debug\extension.vsixmanifest
-N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\obj\Debug\NLuaToolVSIX.csprojResolveAssemblyReference.cache
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\bin\Debug\System.Collections.Immutable.dll
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\bin\Debug\System.Collections.Immutable.xml
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\bin\Debug\LanguageService.dll
@@ -63,3 +62,4 @@ N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\bin\Debug\LanguageService.pdb
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\bin\Debug\Microsoft.VisualStudio.Language.StandardClassification.dll
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\bin\Debug\Microsoft.VisualStudio.Language.StandardClassification.xml
 N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\bin\Debug\Microsoft.VisualStudio.Validation.dll
+N:\NLUA\VsTool\NLuaToolVSIX\NLuaToolVSIX\obj\Debug\NLuaToolVSIX.csprojResolveAssemblyReference.cache

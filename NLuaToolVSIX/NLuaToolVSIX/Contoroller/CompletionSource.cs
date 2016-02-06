@@ -21,6 +21,8 @@ using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Utilities;
 using System.Reflection;
 using LanguageService.Formatting.Options;
+using System.Text.RegularExpressions;
+using System.IO;
 
 namespace OokLanguage
 {
@@ -40,45 +42,20 @@ namespace OokLanguage
         private ITextBuffer _buffer;
         private bool _disposed = false;
 
-        private static List<string> LocalDir = new List<string>();
+        private  List<string> LocalDir = new List<string>();
 
-        private static Dictionary<string, Type> TypeDir = new Dictionary<string, Type>();
+        private  Dictionary<string, Type> TypeDir = new Dictionary<string, Type>();
+        private  Dictionary<string, Assembly> AssDir = new Dictionary<string, Assembly>();
 
-        private static Dictionary<Type, List<string>> typeMembers = new Dictionary<Type, List<string>>();
-        private static Dictionary<Type, List<string>> typeMethods = new Dictionary<Type, List<string>>();
+        private  Dictionary<Type, List<string>> typeMembers = new Dictionary<Type, List<string>>();
+        private  Dictionary<Type, List<string>> typeMethods = new Dictionary<Type, List<string>>();
    
 
-        static OokCompletionSource()
+    
+
+        public  Assembly GetAssembly(string namespaces)
         {
-            LocalDir.Add("import");
-            LocalDir.Add("function");
-            LocalDir.Add("require");
-            LocalDir.Add("repeat");
-            LocalDir.Add("break");
-            LocalDir.Add("and");
-            LocalDir.Add("else");
-            LocalDir.Add("false");
-            LocalDir.Add("true");
-            LocalDir.Add("return");
-            LocalDir.Add("while");
-            LocalDir.Add("local");
-            LocalDir.Add("elseif");
-            LocalDir.Add("until");
-            LocalDir.Add("then");
-            LocalDir.Add("print");
-            LocalDir.Add("nil");
-            LocalDir.Add("not");
-            LocalDir.Add("end");
 
-
-            LoadingNameSpace(typeof(string).Assembly,"System");
-
-           
-        }
-
-
-        public static Assembly GetAssembly(string namespaces)
-        {
             if (namespaces.IndexOf("System.IO") >= 0)
                 return typeof(System.IO.File).Assembly;
             else if (namespaces.IndexOf("System.Net.Socket") >= 0)
@@ -105,15 +82,58 @@ namespace OokLanguage
                 return typeof(System.Configuration.Configuration).Assembly;
             else if (namespaces.IndexOf("System.Configuration.Install") >= 0)
                 return typeof(System.Configuration.Install.Installer).Assembly;
-            else
+            else if (namespaces.IndexOf("System.Configuration.Install") >= 0)
+                return typeof(System.Configuration.Install.Installer).Assembly;
+            else if (namespaces.IndexOf("System.Data.SqlClient") >= 0)
+                return typeof(System.Data.SqlClient.SqlConnection).Assembly;
+            else if (namespaces.IndexOf("System.Data.OracleClient") >= 0)
+                return typeof(System.Data.OracleClient.OracleLob).Assembly;
+            else if (namespaces.IndexOf("System.Data.Odbc") >= 0)
+                return typeof(System.Data.Odbc.OdbcConnection).Assembly;
+            else if (namespaces.IndexOf("System.Data.Linq") >= 0)
+                return typeof(System.Data.Linq.SqlClient.SqlHelpers).Assembly;
+            else if(namespaces.IndexOf("System.Data") >= 0)
+                return typeof(System.Data.DataSet).Assembly;
+            else if (namespaces.IndexOf("System") >= 0)
                 return typeof(IntPtr).Assembly;
+            else
+            {
+                if(AssDir.ContainsKey(namespaces))
+                {
+                    return AssDir[namespaces];
+                }else
+                {
+                    return typeof(IntPtr).Assembly;
+                }
+
+            }
 
         }
 
 
-        public static void LoadingNameSpace(string namespaces)
+        public void LoadingNameSpace(string namespaces)
         {
+
             namespaces = namespaces.Trim();
+            namespaces = namespaces.Trim('"');
+
+
+
+            if (File.Exists(namespaces))
+            {
+                var ass = Assembly.LoadFile(namespaces);
+
+                foreach (var item in ass.GetTypes())
+                {
+                    if (!AssDir.ContainsKey(item.Namespace))
+                    {
+                        AssDir.Add(item.Namespace, ass);
+                    }
+                }
+
+                return;
+            }
+
 
             if (string.IsNullOrEmpty(namespaces))
                 return;
@@ -127,12 +147,12 @@ namespace OokLanguage
             }
             else
             {
-                LoadingNameSpace(types, namespaces);               
+                LoadingNameSpace(types, namespaces);
             }
-           
+
         }
 
-        public static void LoadingNameSpace(Assembly assembly,string namespaces)
+        public  void LoadingNameSpace(Assembly assembly,string namespaces)
         {
             Type[] types= assembly.GetTypes();
 
@@ -159,7 +179,7 @@ namespace OokLanguage
         }
 
 
-        private static List<string> GetTypeMethods(Type type,bool isstatic)
+        private  List<string> GetTypeMethods(Type type,bool isstatic)
         {
             if (!typeMethods.ContainsKey(type))
             {
@@ -219,7 +239,7 @@ namespace OokLanguage
         }
 
 
-        private static List<string> GetTypeMembers(Type type,bool isStatic)
+        private  List<string> GetTypeMembers(Type type,bool isStatic)
         {
             if (!typeMembers.ContainsKey(type))
             {
@@ -300,9 +320,96 @@ namespace OokLanguage
         public OokCompletionSource(ITextBuffer buffer)
         {
             _buffer = buffer;
+
+
+            LocalDir.Add("import");
+            LocalDir.Add("function");
+            LocalDir.Add("require");
+            LocalDir.Add("repeat");
+            LocalDir.Add("break");
+            LocalDir.Add("and");
+            LocalDir.Add("else");
+            LocalDir.Add("false");
+            LocalDir.Add("true");
+            LocalDir.Add("return");
+            LocalDir.Add("while");
+            LocalDir.Add("local");
+            LocalDir.Add("elseif");
+            LocalDir.Add("until");
+            LocalDir.Add("then");
+            LocalDir.Add("print");
+            LocalDir.Add("nil");
+            LocalDir.Add("not");
+            LocalDir.Add("end");
+            LocalDir.Add("CLRPackage");
+
+           // LoadingNameSpace(typeof(string).Assembly, "System");
+
+            _buffer.Changed += _buffer_Changed;
+           
+             LoadingNameSpace();
+
+
         }
 
+       
 
+        private void _buffer_Changed(object sender, TextContentChangedEventArgs e)
+        {
+            //if (e.EditTag == null)
+            //{
+
+            if (e.Changes.Count > 0)
+            {
+                foreach (var item in e.Changes)
+                {
+                    if (string.IsNullOrEmpty(item.NewText) && !string.IsNullOrEmpty(item.OldText))
+                    {
+                        TypeDir.Clear();
+                        typeMembers.Clear();
+                        typeMethods.Clear();
+
+                    }
+                    else if (!string.IsNullOrEmpty(item.NewText) && string.IsNullOrEmpty(item.OldText))
+                    {
+                        LoadingNameSpace();
+
+                    }
+
+                }
+
+            }
+
+            //}
+            //else
+            //{
+            //    LoadingNameSpace();
+            //}
+        }
+
+        private void LoadingNameSpace()
+        {
+           
+            foreach (var line in _buffer.CurrentSnapshot.Lines)
+            {
+                string txt = line.GetText();
+
+                if (txt.IndexOf("import")>=0)
+                {
+                    var rx = Regex.Matches(txt, "(?<=import[ ,\t]).+");
+
+                    foreach (Match item in rx)
+                    {
+                        if (item.Success)
+                        {
+                            string val = item.Value.Trim(' ', '\t', '"');
+                            LoadingNameSpace(val);
+
+                        }
+                    }
+                }
+            }
+        }
 
         public void AugmentCompletionSession(ICompletionSession session, IList<CompletionSet> completionSets)
         {
@@ -328,9 +435,7 @@ namespace OokLanguage
                 start -= 1;
             }
 
-
-
-
+            
             char[] indexchar = new char[] { ' ', '\t', ':', '(', '[', ';', '>', '=', '.',':' };
 
 
@@ -338,10 +443,13 @@ namespace OokLanguage
 
             string linetxt = line.GetText();
 
+          
+
             if (linetxt.Length > 0 && linetxt[linetxt.Length - 1] == '.')
             {
                 string currentTxt = linetxt;
                 bool isStatic = true;
+                byte chueck = 0;
                 tp:
                 string lstr = currentTxt.Substring(0, currentTxt.Length - 1);
                 int lastindex = lstr.LastIndexOfAny(indexchar);
@@ -361,8 +469,11 @@ namespace OokLanguage
                     currentTxt = linetxt.Substring(0, linetxt.LastIndexOf(cmd));
                     if (currentTxt.Length > 0)
                     {
+                        chueck++;
                         isStatic = false;
-                        goto tp;
+
+                        if(chueck<50)
+                            goto tp;
                     }
                 }
 
@@ -383,7 +494,8 @@ namespace OokLanguage
 
                 string currentTxt = linetxt;
                 bool isStatic = true;
-
+                byte chueck = 0;
+                
                 tp:
 
                 string lstr = currentTxt.Substring(0, currentTxt.Length - 1);
@@ -404,8 +516,11 @@ namespace OokLanguage
                     currentTxt = linetxt.Substring(0, linetxt.LastIndexOf(cmd));
                     if (currentTxt.Length > 0)
                     {
+                        chueck++;
                         isStatic = false;
-                        goto tp;
+
+                        if (chueck < 50)
+                            goto tp;
                     }
                 }
 
@@ -460,6 +575,7 @@ namespace OokLanguage
 
                     completionSets.Add(new CompletionSet("All", "All", applicableTo, completions, Enumerable.Empty<Completion>()));
                 }
+               
             }
 
 
@@ -469,6 +585,7 @@ namespace OokLanguage
 
         public void Dispose()
         {
+            _buffer.Changed -= _buffer_Changed;
             _disposed = true;
         }
 

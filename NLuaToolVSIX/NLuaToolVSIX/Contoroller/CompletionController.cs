@@ -119,10 +119,19 @@ namespace OokLanguage
                         case VSConstants.VSStd2KCmdID.TYPECHAR:
                             char ch = GetTypeChar(pvaIn);
 
-
-                             if (ch != '\r'&&ch!='\n'&&ch!=';'&&ch!=' '&&ch!='}'&&ch!=')'&&ch!=']'&ch!='*')
+                            if(ch=='.'||ch==':')
+                            {
+                                if (_currentSession != null)
+                                    Cancel();
+                            }
+                            
+                            if (ch != '\r'&&ch!='\n'&&ch!=';'&&ch!=' '&&ch!='}'&&ch!=')'&& ch!='('&&ch!='['&&ch!='{'&&ch!=']'&ch!='*')
                             {
                                 StartSession();
+                            }
+                            else if(ch == '\r' || ch == '\n' || ch == ';' || ch == ' ' || ch == '{' || ch == '(' || ch == '[' || ch == ':')
+                            {
+                                Cancel();
                             }
                             else if (_currentSession != null)
                                 Filter();
@@ -170,7 +179,7 @@ namespace OokLanguage
         {
             if (_currentSession == null)
                 return;
-
+            
             _currentSession.SelectedCompletionSet.SelectBestMatch();
             _currentSession.SelectedCompletionSet.Recalculate();
         }
@@ -230,12 +239,17 @@ namespace OokLanguage
             {
                 _currentSession = Broker.GetSessions(TextView)[0];
             }
+
+
+           
             _currentSession.Dismissed += (sender, args) => _currentSession = null;
           
             _currentSession.Start();
 
             return true;
         }
+
+   
 
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
         {

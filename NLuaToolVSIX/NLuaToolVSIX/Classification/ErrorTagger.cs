@@ -11,8 +11,9 @@ using Microsoft.VisualStudio.Text.Tagging;
 using LanguageService;
 using System.Threading;
 using Microsoft;
+using System.Text.RegularExpressions;
 
-namespace NLuaToolVSIX.Classification
+namespace OokLanguage
 {
     internal sealed class ErrorTagger : DisposableObject, ITagger<ErrorTag>
     {
@@ -80,6 +81,8 @@ namespace NLuaToolVSIX.Classification
 
                 yield return new TagSpan<ErrorTag>(newSnapshotSpan, new ErrorTag(PredefinedErrorTypeNames.SyntaxError, error.Message));
             }
+
+           
         }
 
         internal static SnapshotSpan CreateSnapshotSpan(ITextSnapshot snapshot, int position, int length)

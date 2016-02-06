@@ -23,7 +23,7 @@ namespace OokLanguage
     using LanguageService.Classification;
     using Microsoft.VisualStudio.Language.StandardClassification;
     using Microsoft.VisualStudio.Text.Adornments;
-    using NLuaToolVSIX.Classification;
+
 
     [Export(typeof(ITaggerProvider))]
     [ContentType("luacode!")]
@@ -45,8 +45,9 @@ namespace OokLanguage
         internal IClassificationTypeRegistryService ClassificationTypeRegistry = null;
 
         [Import]
-        internal IBufferTagAggregatorFactoryService aggregatorFactory = null;            
+        internal IBufferTagAggregatorFactoryService aggregatorFactory = null;
 
+      
 
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
@@ -88,7 +89,7 @@ namespace OokLanguage
         ITagAggregator<OokTokenTag> _aggregator;
         IDictionary<OokTokenTypes, IClassificationType> _ookTypes;
 
-    
+        LanguageService.LuaFeatureContainer luaaFeature = new LuaFeatureContainer();
 
         /// <summary>
         /// Construct the classifier and define search tokens
@@ -134,6 +135,7 @@ namespace OokLanguage
         /// </summary>
         public IEnumerable<ITagSpan<ClassificationTag>> GetTags(NormalizedSnapshotSpanCollection spans)
         {      
+            
 
             foreach (var tagSpan in _aggregator.GetTags(spans))
             {
@@ -144,6 +146,8 @@ namespace OokLanguage
             }
 
 
+       
+           
         }
     }
 }

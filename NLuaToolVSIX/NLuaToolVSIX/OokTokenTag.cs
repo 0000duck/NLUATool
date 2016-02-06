@@ -20,16 +20,17 @@ namespace OokLanguage
     using Microsoft.VisualStudio.Text.Tagging;
     using Microsoft.VisualStudio.Utilities;
     using System.Text.RegularExpressions;
-
+    using Microsoft.VisualStudio.Language.Intellisense;
     [Export(typeof(ITaggerProvider))]
     [ContentType("luacode!")]
     [TagType(typeof(OokTokenTag))]
     internal sealed class OokTokenTagProvider : ITaggerProvider
     {
-
+        [Import]
+        ICompletionBroker CompletionBroker = null;
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
-            return new OokTokenTagger(buffer) as ITagger<T>;
+            return new OokTokenTagger(buffer, CompletionBroker) as ITagger<T>;
         }
     }
 
@@ -48,10 +49,12 @@ namespace OokLanguage
 
         ITextBuffer _buffer;
         IDictionary<string, OokTokenTypes> _ookTypes;
+        ICompletionBroker Broker;
 
-        internal OokTokenTagger(ITextBuffer buffer)
+        internal OokTokenTagger(ITextBuffer buffer, ICompletionBroker broker)
         {
             _buffer = buffer;
+            Broker = broker;
             _ookTypes = new Dictionary<string, OokTokenTypes>();
 
             _ookTypes["import"] = OokTokenTypes.keyword;
@@ -80,7 +83,7 @@ namespace OokLanguage
             _ookTypes["_node"] = OokTokenTypes.node;
             _ookTypes["print"] = OokTokenTypes.keyword;
             _ookTypes["require"] = OokTokenTypes.keyword;
-            
+            _ookTypes["CLRPackage"]= OokTokenTypes.keyword;
 
         }
 
@@ -160,16 +163,9 @@ namespace OokLanguage
                     }
                 }   
 
-                rx = Regex.Matches(containingLine.GetText(), "(?<=import[ ,\t]).+");
+             
 
-                foreach (Match item in rx)
-                {
-                    if (item.Success)
-                    {
-                        string val = item.Value.Trim(' ', '\t','"');
-                        OokCompletionSource.LoadingNameSpace(val);
-                    }
-                }
+
             }
             
         }
