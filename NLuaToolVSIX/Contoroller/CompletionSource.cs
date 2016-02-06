@@ -23,7 +23,6 @@ using System.Reflection;
 using LanguageService.Formatting.Options;
 using System.Text.RegularExpressions;
 using System.IO;
-using LanguageService;
 
 namespace OokLanguage
 {
@@ -66,10 +65,6 @@ namespace OokLanguage
 
         private  Dictionary<string, Type> TypeDir = new Dictionary<string, Type>();
         private  Dictionary<string, Assembly> AssDir = new Dictionary<string, Assembly>();
-
-        private  Dictionary<string, Type> defDir = new Dictionary<string, Type>();
-
-
 
         private  Dictionary<Type, List<MemsInfo>> typeMembers = new Dictionary<Type, List<MemsInfo>>();
         private  Dictionary<Type, List<MemsInfo>> typeMethods = new Dictionary<Type, List<MemsInfo>>();
@@ -216,7 +211,7 @@ namespace OokLanguage
                                           select p))
                     {
 
-                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
+                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0)
                         {
                             continue;
                         }
@@ -238,7 +233,7 @@ namespace OokLanguage
                                           select p))
                     {
 
-                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
+                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0)
                         {
                             continue;
                         }
@@ -276,7 +271,7 @@ namespace OokLanguage
                                               select p))
                         {
 
-                            if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
+                            if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0)
                             {
                                 continue;
                             }
@@ -297,7 +292,7 @@ namespace OokLanguage
                                               select p))
                         {
 
-                            if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
+                            if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0)
                             {
                                 continue;
                             }
@@ -347,7 +342,7 @@ namespace OokLanguage
                                       select p))
                 {
 
-                    if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
+                    if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0)
                     {
                         continue;
                     }
@@ -434,7 +429,7 @@ namespace OokLanguage
                                           select p))
                     {
 
-                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0|| item.Name.IndexOf("add_")==0 || item.Name.IndexOf("remove_")==0)
+                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0)
                         {
                             continue;
                         }
@@ -463,15 +458,6 @@ namespace OokLanguage
                                                
                         if (tmp.Find(p => p.Name == item.Name) == null)
                             tmp.Add(new MemsInfo(item.Name,item.ToString(), "Is Properties"));
-
-                    }
-
-                    foreach (var item in (from p in type.GetEvents()                                          
-                                          select p))
-                    {
-
-                        if (tmp.Find(p => p.Name == item.Name) == null)
-                            tmp.Add(new MemsInfo(item.Name, item.ToString(), "Is Events"));
 
                     }
 
@@ -603,7 +589,6 @@ namespace OokLanguage
                             TypeDir.Clear();
                             typeMembers.Clear();
                             typeMethods.Clear();
-                            defDir.Clear();
                         }
                     }
                     else if (!string.IsNullOrEmpty(item.NewText) && string.IsNullOrEmpty(item.OldText))
@@ -623,84 +608,6 @@ namespace OokLanguage
             //}
         }
 
-
-        SyntaxKind[] localdefvar = new SyntaxKind[]
-        {
-              SyntaxKind.LocalKeyword,
-              SyntaxKind.Identifier,
-              SyntaxKind.AssignmentOperator
-        };
-
-        private bool ChecklocalDef(List<Token> token)
-        {
-            if (token.Count < localdefvar.Length)
-                return false;
-
-            bool isDef = true;
-            for (int i = 0; i < localdefvar.Length; i++)
-            {
-                if (token[i].Kind != localdefvar[i])
-                {
-                    isDef = false;
-                    break;
-                }
-            }
-
-            if (isDef)
-            {
-                Token Name = token[1];
-                Token type = token[3];
-
-                if (TypeDir.ContainsKey(type.Text))
-                {
-                    defDir[Name.Text] = TypeDir[type.Text];
-                }
-
-                return true;
-            }
-
-            return false;
-
-        }
-
-        SyntaxKind[] defvar = new SyntaxKind[]
-          {
-              SyntaxKind.Identifier,
-              SyntaxKind.AssignmentOperator             
-          };
-
-        private bool CheckDef(List<Token> token)
-        {
-            if (token.Count < defvar.Length)
-                return false;
-
-            bool isDef = true;
-            for (int i = 0; i < defvar.Length; i++)
-            {
-                if (token[i].Kind != defvar[i])
-                {
-                    isDef = false;
-                    break;
-                }
-            }
-
-            if (isDef)
-            {
-                Token Name = token[0];
-                Token type = token[2];
-
-                if(TypeDir.ContainsKey(type.Text))
-                {
-                    defDir[Name.Text] = TypeDir[type.Text];
-                }
-
-                return true;
-            }
-
-            return false;
-
-        }
-
         private void LoadingNameSpace()
         {
 
@@ -708,11 +615,12 @@ namespace OokLanguage
             {
                 task = new System.Threading.Tasks.Task(() =>
                   {
-                                          
+
+                    
                       foreach (var line in txtCache.Get(_buffer.CurrentSnapshot).Lines)
                       {
                           string txt = line.Text;
-                          
+
                           if (txt.IndexOf("import") >= 0)
                           {
                               var rx = Regex.Matches(txt, "(?<=import[ ,\t]).+");
@@ -726,24 +634,6 @@ namespace OokLanguage
 
                                   }
                               }
-                          }
-                          else
-                          {
-                              var token= LanguageService.Lexer.Tokenize(line.TextReader);
-
-                              if(token.Count>3)
-                              {
-                                  if(token[0].Kind==SyntaxKind.Identifier)
-                                  {
-                                      CheckDef(token);
-                                      
-                                  }else if(token[0].Kind==SyntaxKind.LocalKeyword)
-                                  {
-                                      ChecklocalDef(token);
-                                  }
-
-                              }
-
                           }
                       }
 
@@ -802,16 +692,10 @@ namespace OokLanguage
 
                 if (TypeDir.ContainsKey(cmd))
                 {
+
                     foreach (var member in GetTypeMembers(TypeDir[cmd],isStatic))
                     {
                         completions.Add(new Completion(member.Name,member.Name, member.type + "\r\n"+member.info,null,""));
-                    }
-                }
-                else if(defDir.ContainsKey(cmd))
-                {
-                    foreach (var member in GetTypeMembers(defDir[cmd], false))
-                    {
-                        completions.Add(new Completion(member.Name, member.Name, member.type + "\r\n" + member.info, null, ""));
                     }
                 }
                 else
@@ -857,13 +741,6 @@ namespace OokLanguage
                 {
 
                     foreach (var member in GetTypeMethods(TypeDir[cmd], isStatic))
-                    {
-                        completions.Add(new Completion(member.Name, member.Name, member.type + "\r\n" + member.info, null, ""));
-                    }
-                }
-                else if (defDir.ContainsKey(cmd))
-                {
-                    foreach (var member in GetTypeMethods(defDir[cmd], false))
                     {
                         completions.Add(new Completion(member.Name, member.Name, member.type + "\r\n" + member.info, null, ""));
                     }
