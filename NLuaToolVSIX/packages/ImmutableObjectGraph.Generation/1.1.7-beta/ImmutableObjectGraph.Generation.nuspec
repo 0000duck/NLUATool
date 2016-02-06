@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/10/nuspec.xsd">
+  <metadata>
+    <id>ImmutableObjectGraph.Generation</id>
+    <version>1.1.7-beta</version>
+    <title>ImmutableObjectGraph Code Generation</title>
+    <authors>Andrew Arnott</authors>
+    <owners>Andrew Arnott</owners>
+    <licenseUrl>https://raw.githubusercontent.com/AArnott/ImmutableObjectGraph/e5c6f39f497017fe99d88faeefc5f80280961a6e/LICENSE.txt</licenseUrl>
+    <projectUrl>https://github.com/aarnott/immutableobjectgraph</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>MSBuild-based code generator to transform simple mutable type definitions into fully functional immutable types with persistent characteristics.</description>
+    <summary>Roslyn-based code generation for immutable types</summary>
+    <copyright>Copyright © Andrew Arnott</copyright>
+    <tags>immutable</tags>
+    <dependencies>
+      <dependency id="ImmutableObjectGraph" version="1.1.7-beta" />
+    </dependencies>
+  </metadata>
+</package>

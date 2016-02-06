@@ -23,6 +23,9 @@ using Microsoft.VisualStudio.Utilities;
 using Microsoft.VisualStudio;
 using System.Windows;
 using System.Runtime.InteropServices;
+using LanguageService.Formatting;
+using LanguageService.Formatting.Options;
+using LanguageService.Shared;
 
 namespace OokLanguage
 {
@@ -62,11 +65,15 @@ namespace OokLanguage
 
             TextView = textView;
             Broker = broker;
+            Settings = new UserSettings();
         }
 
         public IWpfTextView TextView { get; private set; }
         public ICompletionBroker Broker { get; private set; }
         public IOleCommandTarget Next { get; set; }
+
+        private LanguageService.LuaFeatureContainer luaLuaFeature = new LanguageService.LuaFeatureContainer();
+        public static UserSettings Settings { get; set; }
 
         private char GetTypeChar(IntPtr pvaIn)
         {
@@ -96,6 +103,7 @@ namespace OokLanguage
                     case VSConstants.VSStd2KCmdID.CANCEL:
                         handled = Cancel();
                         break;
+                    
                 }
             }
 
@@ -122,11 +130,37 @@ namespace OokLanguage
                         case VSConstants.VSStd2KCmdID.BACKSPACE:
                             Filter();
                             break;
+                        case VSConstants.VSStd2KCmdID.RETURN:
+                            Format();
+                            break;
+
                     }
                 }
             }
 
             return hresult;
+        }
+
+        private void Format()
+        {
+            SnapshotPoint caret = this.TextView.Caret.Position.BufferPosition;
+
+            Range range = new Range(0, caret.Snapshot.Length);
+
+            List<DisableableRules> disabledRules = this.GetDisabledRules(Settings);
+            FormattingOptions formattingOptions = GetFormattingOptions(Settings);
+           
+            List<TextEditInfo> edits = luaLuaFeature.Formatter.Format(new LanguageService.SourceText(caret.Snapshot.GetText()), range, formattingOptions);
+
+            using (ITextEdit textEdit = this.TextView.TextBuffer.CreateEdit())
+            {
+                foreach (TextEditInfo edit in edits)
+                {
+                    textEdit.Replace(edit.Start, edit.Length, edit.ReplacingWith);
+                }
+
+                textEdit.Apply();
+            }
         }
 
         /// <summary>
@@ -159,6 +193,9 @@ namespace OokLanguage
         /// </summary>
         bool Complete(bool force)
         {
+
+          
+
             if (_currentSession == null)
                 return false;
 
@@ -213,6 +250,93 @@ namespace OokLanguage
                 }
             }
             return Next.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
+        }
+
+        private FormattingOptions GetFormattingOptions(UserSettings settings)
+        {
+
+            List<DisableableRules> disabledRules = this.GetDisabledRules(settings);
+
+            FormattingOptions formattingOptions = new FormattingOptions(disabledRules, settings.TabSize, settings.IndentSize, settings.UsingTabs);
+
+            return formattingOptions;
+        }
+
+        private List<DisableableRules> GetDisabledRules(UserSettings settings)
+        {
+            var disabledRules = new List<DisableableRules>();
+
+            if (settings.AddSpacesOnInsideOfCurlyBraces != true)
+            {
+                disabledRules.Add(DisableableRules.SpaceOnInsideOfCurlyBraces);
+            }
+
+            if (settings.AddSpacesOnInsideOfParenthesis != true)
+            {
+                disabledRules.Add(DisableableRules.SpaceOnInsideOfParenthesis);
+            }
+
+            if (settings.AddSpacesOnInsideOfSquareBrackets != true)
+            {
+                disabledRules.Add(DisableableRules.SpaceOnInsideOfSquareBrackets);
+            }
+
+            if (settings.SpaceBetweenFunctionAndParenthesis != true)
+            {
+                disabledRules.Add(DisableableRules.SpaceBeforeOpenParenthesis);
+            }
+
+            if (settings.SpaceAfterCommas != true)
+            {
+                disabledRules.Add(DisableableRules.SpaceAfterCommas);
+            }
+
+            if (settings.SpaceBeforeAndAfterAssignmentInStatement != true)
+            {
+                disabledRules.Add(DisableableRules.SpaceBeforeAndAfterAssignmentForStatement);
+            }
+
+            if (settings.SpaceBeforeAndAfterAssignmentOperatorOnField != true)
+            {
+                disabledRules.Add(DisableableRules.SpaceBeforeAndAfterAssignmentForField);
+            }
+
+            if (settings.ForLoopAssignmentSpacing != true)
+            {
+                disabledRules.Add(DisableableRules.SpaceBeforeAndAfterAssignmentInForLoopHeader);
+            }
+
+            if (settings.ForLoopIndexSpacing != true)
+            {
+                disabledRules.Add(DisableableRules.NoSpaceBeforeAndAfterIndiciesInForLoopHeader);
+            }
+
+            if (settings.AddNewLinesToMultilineTableConstructors != true)
+            {
+                disabledRules.Add(DisableableRules.WrappingMoreLinesForTableConstructors);
+            }
+
+            if (settings.WrapSingleLineForLoops != true)
+            {
+                disabledRules.Add(DisableableRules.WrappingOneLineForFors);
+            }
+
+            if (settings.WrapSingleLineFunctions != true)
+            {
+                disabledRules.Add(DisableableRules.WrappingOneLineForFunctions);
+            }
+
+            if (settings.WrapSingleLineTableConstructors != true)
+            {
+                disabledRules.Add(DisableableRules.WrappingOneLineForTableConstructors);
+            }
+
+            if (settings.SpaceBeforeAndAfterBinaryOperations != true)
+            {
+                disabledRules.Add(DisableableRules.SpaceBeforeAndAfterBinaryOperations);
+            }
+
+            return disabledRules;
         }
     }
 

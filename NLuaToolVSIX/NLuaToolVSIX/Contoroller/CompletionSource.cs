@@ -20,6 +20,7 @@ using Microsoft.VisualStudio.Text.Tagging;
 using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Utilities;
 using System.Reflection;
+using LanguageService.Formatting.Options;
 
 namespace OokLanguage
 {
@@ -45,6 +46,7 @@ namespace OokLanguage
 
         private static Dictionary<Type, List<string>> typeMembers = new Dictionary<Type, List<string>>();
         private static Dictionary<Type, List<string>> typeMethods = new Dictionary<Type, List<string>>();
+   
 
         static OokCompletionSource()
         {
@@ -71,7 +73,7 @@ namespace OokLanguage
 
             LoadingNameSpace(typeof(string).Assembly,"System");
 
-            
+           
         }
 
 
@@ -307,13 +309,18 @@ namespace OokLanguage
             if (_disposed)
                 throw new ObjectDisposedException("OokCompletionSource");
 
+
             ITextSnapshot snapshot = _buffer.CurrentSnapshot;
+
+            
             var triggerPoint = (SnapshotPoint)session.GetTriggerPoint(snapshot);
 
             if (triggerPoint == null)
                 return;
 
             var line = triggerPoint.GetContainingLine();
+
+
             SnapshotPoint start = triggerPoint;
 
             while (start > line.Start && !char.IsWhiteSpace((start - 1).GetChar()))
@@ -464,6 +471,8 @@ namespace OokLanguage
         {
             _disposed = true;
         }
+
+
     }
 }
 
