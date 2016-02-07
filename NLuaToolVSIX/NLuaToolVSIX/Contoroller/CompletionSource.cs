@@ -24,6 +24,7 @@ using LanguageService.Formatting.Options;
 using System.Text.RegularExpressions;
 using System.IO;
 using LanguageService;
+using System.Collections.Concurrent;
 
 namespace OokLanguage
 {
@@ -64,15 +65,15 @@ namespace OokLanguage
 
         private  List<string> LocalDir = new List<string>();
 
-        private  Dictionary<string, Type> TypeDir = new Dictionary<string, Type>();
-        private  Dictionary<string, Assembly> AssDir = new Dictionary<string, Assembly>();
+        private ConcurrentDictionary<string, Type> TypeDir = new ConcurrentDictionary<string, Type>();
+        private ConcurrentDictionary<string, Assembly> AssDir = new ConcurrentDictionary<string, Assembly>();
 
-        private  Dictionary<string, Type> defDir = new Dictionary<string, Type>();
+        private ConcurrentDictionary<string, Type> defDir = new ConcurrentDictionary<string, Type>();
 
 
 
-        private  Dictionary<Type, List<MemsInfo>> typeMembers = new Dictionary<Type, List<MemsInfo>>();
-        private  Dictionary<Type, List<MemsInfo>> typeMethods = new Dictionary<Type, List<MemsInfo>>();
+        private ConcurrentDictionary<Type, List<MemsInfo>> typeMembers = new ConcurrentDictionary<Type, List<MemsInfo>>();
+        private ConcurrentDictionary<Type, List<MemsInfo>> typeMethods = new ConcurrentDictionary<Type, List<MemsInfo>>();
 
         private System.Threading.Tasks.Task task;
 
@@ -139,6 +140,7 @@ namespace OokLanguage
         {
 
             namespaces = namespaces.Trim();
+            namespaces = namespaces.Trim(';');
             namespaces = namespaces.Trim('"');
 
 
@@ -151,7 +153,7 @@ namespace OokLanguage
                 {
                     if (!AssDir.ContainsKey(item.Namespace))
                     {
-                        AssDir.Add(item.Namespace, ass);
+                        AssDir.TryAdd(item.Namespace, ass);
                     }
                 }
 
@@ -190,12 +192,12 @@ namespace OokLanguage
                         if (name.Length == 2)
                         {
                             if (!TypeDir.ContainsKey(name[0]))
-                                TypeDir.Add(name[0], item);
+                                TypeDir.TryAdd(name[0], item);
                         }
                         else
                         {
                             if (!TypeDir.ContainsKey(item.Name))
-                                TypeDir.Add(item.Name, item);
+                                TypeDir.TryAdd(item.Name, item);
                         }
                     }
                 }
@@ -209,141 +211,9 @@ namespace OokLanguage
 
             if (type.IsClass)
             {
-                if (isstatic)
-                {
-                    foreach (var item in (from p in type.GetMethods()
-                                          where p.IsStatic && p.IsPublic
-                                          select p))
-                    {
-
-                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            MemsInfo method = new MemsInfo(item.Name, item.ToString(), "Is Method");
-
-                            if (tmp.Find(p => p.type == method.type) == null)
-                                tmp.Add(method);
-
-                        }
-
-                    }
-                }
-                else
-                {
-                    foreach (var item in (from p in type.GetMethods()
-                                          where p.IsStatic == false && p.IsPublic
-                                          select p))
-                    {
-
-                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
-                        {
-                            continue;
-                        }
-                        else
-                        {
-                            MemsInfo method = new MemsInfo(item.Name, item.ToString(), "Is Method");
-
-                            if (tmp.Find(p => p.type == method.type) == null)
-                                tmp.Add(method);
-                        }
-
-                    }
-                }
-
-                if (type.BaseType != null)
-                    GetTypeMethods(tmp, type.BaseType, isstatic);
-
-            }
-
-
-        }
-
-        private  List<MemsInfo> GetTypeMethods(Type type,bool isstatic)
-        {
-            if (!typeMethods.ContainsKey(type))
-            {
-                List<MemsInfo> tmp = new List<MemsInfo>();
-             
-                if (type.IsClass)
-                {
-                    if (isstatic)
-                    {
-                        foreach (var item in (from p in type.GetMethods()
-                                              where p.IsStatic && p.IsPublic
-                                              select p))
-                        {
-
-                            if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
-                            {
-                                continue;
-                            }
-                            else
-                            {
-                                MemsInfo method = new MemsInfo(item.Name,item.ToString(),"Is Method");
-
-                                if (tmp.Find(p => p.type == method.type) == null)
-                                    tmp.Add(method);
-
-                            }
-
-                        }
-                    }else
-                    {
-                        foreach (var item in (from p in type.GetMethods()
-                                              where p.IsStatic==false && p.IsPublic
-                                              select p))
-                        {
-
-                            if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
-                            {
-                                continue;
-                            }
-                            else
-                            {
-                                MemsInfo method = new MemsInfo(item.Name, item.ToString(), "Is Method");
-
-                                if (tmp.Find(p => p.type == method.type) == null)
-                                    tmp.Add(method);
-                            }
-
-                        }
-                    }
-
-                }
-
-                tmp.Sort((a, b) => a.Name.CompareTo(b.Name));
-
-                typeMethods[type] = tmp;
-                return tmp;
-            }
-            else
-            {
-                return typeMethods[type];
-            }
-        }
-
-
-
-        private  void GetTypeMembers(List<MemsInfo> tmp,Type type, bool isStatic)
-        {
-
-           
-            if (type.IsEnum)
-            {
-                foreach (var item in type.GetEnumNames())
-                {
-                    tmp.Add(new MemsInfo(item, type.Name + "." + item, "Is Enum"));
-                }
-
-            }
-            else if (type.IsClass)
-            {
 
                 foreach (var item in (from p in type.GetMethods()
-                                      where p.IsStatic && p.IsPublic
+                                      where p.IsStatic == isstatic && p.IsPublic
                                       select p))
                 {
 
@@ -364,9 +234,113 @@ namespace OokLanguage
                             tmp.Add(method);
 
                         }
+                    }
+
+                }
+
+
+                if (type.BaseType != null)
+                    GetTypeMethods(tmp, type.BaseType, isstatic);
+
+            }
+
+
+        }
+
+        private  List<MemsInfo> GetTypeMethods(Type type,bool isstatic)
+        {
+            if (!typeMethods.ContainsKey(type))
+            {
+                List<MemsInfo> tmp = new List<MemsInfo>();
+
+                if (type.IsClass)
+                {
+
+                    foreach (var item in (from p in type.GetMethods()
+                                          where p.IsStatic == isstatic && p.IsPublic
+                                          select p))
+                    {
+
+                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            MemsInfo x = null;
+                            if ((x = tmp.Find(p => p.Name == item.Name)) != null)
+                            {
+                                x.type += "\r\n" + item.ToString();
+                            }
+                            else
+                            {
+                                MemsInfo method = new MemsInfo(item.Name, item.ToString(), "Is Method");
+                                tmp.Add(method);
+
+                            }
+
+                        }
 
                     }
 
+
+                }
+
+                tmp.Sort((a, b) => a.Name.CompareTo(b.Name));
+
+                typeMethods[type] = tmp;
+                return tmp;
+            }
+            else
+            {
+                return typeMethods[type];
+            }
+        }
+
+
+
+        private  void GetTypeMembers(List<MemsInfo> tmp,Type type, bool isStatic)
+        {
+
+
+            if (type.IsEnum)
+            {
+                foreach (var item in type.GetEnumNames())
+                {
+                    tmp.Add(new MemsInfo(item, type.Name + "." + item, "Is Enum"));
+                }
+
+            }
+            else if (type.IsClass)
+            {
+                if (isStatic)
+                {
+                    foreach (var item in (from p in type.GetMethods()
+                                          where p.IsStatic && p.IsPublic
+                                          select p))
+                    {
+
+                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            MemsInfo x = null;
+                            if ((x = tmp.Find(p => p.Name == item.Name)) != null)
+                            {
+                                x.type += "\r\n" + item.ToString();
+                            }
+                            else
+                            {
+                                MemsInfo method = new MemsInfo(item.Name, item.ToString(), "Is Method");
+                                tmp.Add(method);
+
+                            }
+
+                        }
+
+                    }
                 }
 
 
@@ -379,29 +353,24 @@ namespace OokLanguage
 
                 }
 
-                if (isStatic)
+                foreach (var item in (from p in type.GetEvents()
+                                      select p))
                 {
-                    foreach (var item in (from p in type.GetFields()
-                                          where p.IsStatic && p.IsPublic
-                                          select p))
-                    {
 
-                        if (tmp.Find(p => p.Name == item.Name) == null)
-                            tmp.Add(new MemsInfo(item.Name, item.ToString(), "Is Field"));
-                    }
+                    if (tmp.Find(p => p.Name == item.Name) == null)
+                        tmp.Add(new MemsInfo(item.Name, item.EventHandlerType.ToString() + "\r\n：Add(fuction(...){})+\r\n" + GetGetMethodstr(item.EventHandlerType), "Is Events"));
+
                 }
-                else
+
+                foreach (var item in (from p in type.GetFields()
+                                      where p.IsStatic == isStatic && p.IsPublic
+                                      select p))
                 {
-                    foreach (var item in (from p in type.GetFields()
-                                          where p.IsStatic == false && p.IsPublic
-                                          select p))
-                    {
 
-                        if (tmp.Find(p => p.Name == item.Name) == null)
-                            tmp.Add(new MemsInfo(item.Name, item.ToString(), "Is Field"));
-
-                    }
+                    if (tmp.Find(p => p.Name == item.Name) == null)
+                        tmp.Add(new MemsInfo(item.Name, item.ToString(), "Is Field"));
                 }
+
 
                 if (type.BaseType != null)
                     GetTypeMembers(tmp, type.BaseType, isStatic);
@@ -422,82 +391,71 @@ namespace OokLanguage
                 {
                     foreach (var item in type.GetEnumNames())
                     {
-                        tmp.Add(new MemsInfo(item,type.Name+"."+item, "Is Enum"));
-                    }                   
+                        tmp.Add(new MemsInfo(item, type.Name + "." + item, "Is Enum"));
+                    }
 
                 }
                 else if (type.IsClass)
                 {
 
-                    foreach (var item in (from p in type.GetMethods()
-                                          where p.IsStatic && p.IsPublic
-                                          select p))
+                    if (isStatic)
                     {
-
-                        if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0|| item.Name.IndexOf("add_")==0 || item.Name.IndexOf("remove_")==0)
-                        {
-                            continue;
-                        }
-                        else
+                        foreach (var item in (from p in type.GetMethods()
+                                              where p.IsStatic && p.IsPublic
+                                              select p))
                         {
 
-                            MemsInfo x = null;
-                            if ((x=tmp.Find(p => p.Name == item.Name)) != null)
+                            if (item.Name.IndexOf("get_") == 0 || item.Name.IndexOf("set_") == 0 || item.Name.IndexOf("add_") == 0 || item.Name.IndexOf("remove_") == 0)
                             {
-                                x.type += "\r\n" + item.ToString();
+                                continue;
                             }
                             else
                             {
-                                MemsInfo method = new MemsInfo(item.Name, item.ToString(), "Is Method");
-                                tmp.Add(method);
 
+                                MemsInfo x = null;
+                                if ((x = tmp.Find(p => p.Name == item.Name)) != null)
+                                {
+                                    x.type += "\r\n" + item.ToString();
+                                }
+                                else
+                                {
+                                    MemsInfo method = new MemsInfo(item.Name, item.ToString(), "Is Method");
+                                    tmp.Add(method);
+
+                                }
                             }
+
                         }
-
                     }
-
 
                     foreach (var item in (from p in type.GetProperties()
                                           select p))
                     {
-                                               
+
                         if (tmp.Find(p => p.Name == item.Name) == null)
-                            tmp.Add(new MemsInfo(item.Name,item.ToString(), "Is Properties"));
+                            tmp.Add(new MemsInfo(item.Name, item.ToString(), "Is Properties"));
 
                     }
 
-                    foreach (var item in (from p in type.GetEvents()                                          
+                    foreach (var item in (from p in type.GetEvents()
                                           select p))
                     {
 
                         if (tmp.Find(p => p.Name == item.Name) == null)
-                            tmp.Add(new MemsInfo(item.Name, item.ToString(), "Is Events"));
+                            tmp.Add(new MemsInfo(item.Name, item.EventHandlerType.ToString()+"\r\n：Add(fuction(...){})+\r\n" + GetGetMethodstr(item.EventHandlerType), "Is Events"));
 
                     }
 
-                    if (isStatic)
+
+                    foreach (var item in (from p in type.GetFields()
+                                          where p.IsStatic==isStatic && p.IsPublic
+                                          select p))
                     {
-                        foreach (var item in (from p in type.GetFields()
-                                              where p.IsStatic && p.IsPublic
-                                              select p))
-                        {                                                     
 
-                            if (tmp.Find(p => p.Name == item.Name) == null)
-                                tmp.Add(new MemsInfo(item.Name, item.ToString(), "Is Field"));
-                        }
+                        if (tmp.Find(p => p.Name == item.Name) == null)
+                            tmp.Add(new MemsInfo(item.Name, item.ToString(), "Is Field"));
                     }
-                    else
-                    {
-                        foreach (var item in (from p in type.GetFields()
-                                              where p.IsStatic==false && p.IsPublic
-                                              select p))
-                        {
 
-                            if (tmp.Find(p => p.Name == item.Name) == null)
-                                tmp.Add(new MemsInfo(item.Name, item.ToString(),"Is Field"));
-
-                        }
-                    }
 
                     if (type.BaseType != null)
                         GetTypeMembers(tmp, type.BaseType, isStatic);
@@ -575,6 +533,13 @@ namespace OokLanguage
             LocalDir.Add("tostring");
             LocalDir.Add("ipairs");
             LocalDir.Add("pairs");
+            LocalDir.Add("MakeGenericType");
+            LocalDir.Add("CallGenricMethod");
+            LocalDir.Add("luanet");
+            LocalDir.Add("import_type");
+            LocalDir.Add("namespace");
+            LocalDir.Add("each");
+            LocalDir.Add("load_assembly");
 
             // LoadingNameSpace(typeof(string).Assembly, "System");
 
@@ -712,7 +677,7 @@ namespace OokLanguage
                       foreach (var line in txtCache.Get(_buffer.CurrentSnapshot).Lines)
                       {
                           string txt = line.Text;
-                          
+
                           if (txt.IndexOf("import") >= 0)
                           {
                               var rx = Regex.Matches(txt, "(?<=import[ ,\t]).+");
@@ -729,22 +694,39 @@ namespace OokLanguage
                           }
                           else
                           {
-                              var token= LanguageService.Lexer.Tokenize(line.TextReader);
+                              List<Token> token = new List<Token>();
 
-                              if(token.Count>3)
+                              if (line.Text.Trim().IndexOf("--@") == 0)
                               {
-                                  if(token[0].Kind==SyntaxKind.Identifier)
+                                  var x = Regex.Match(line.Text, "[\\w ]+=[ \\w]+");
+
+                                  if (x.Success)
+                                  {
+                                      token = LanguageService.Lexer.Tokenize(new SourceText(x.Value).TextReader);
+                                  }
+
+                              }
+                              else
+                              {
+                                  token = LanguageService.Lexer.Tokenize(line.TextReader);
+                              }
+                              if (token.Count > 3)
+                              {
+                                  if (token[0].Kind == SyntaxKind.Identifier)
                                   {
                                       CheckDef(token);
-                                      
-                                  }else if(token[0].Kind==SyntaxKind.LocalKeyword)
+
+                                  }
+                                  else if (token[0].Kind == SyntaxKind.LocalKeyword)
                                   {
                                       ChecklocalDef(token);
                                   }
 
                               }
-
                           }
+
+
+  
                       }
 
                       task = null;
@@ -753,6 +735,172 @@ namespace OokLanguage
                 task.Start();
 
             }
+        }
+
+
+        private Type GetRx(string txt,out bool IsStatic)
+        {
+            IsStatic = true;
+
+            if (txt.IndexOf('=') > 0)
+            {
+                var x = txt.Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
+                if (x.Length > 0)
+                    txt = x[x.Length - 1];
+            }
+
+            var tp= Regex.Matches(txt, "\\b[\\w]+\\b");
+
+            if (tp.Count == 0)
+                return null;
+            else
+            {
+                 string root= tp[0].Value;
+
+                if (TypeDir.ContainsKey(root))
+                {
+                    Type currentType = TypeDir[root];
+
+                    for (int i = 1; i < tp.Count; i++)
+                    {
+                        string member = tp[i].Value;
+                        re:
+                        MemberInfo[] info=currentType.GetMember(member);
+
+                        if(info.Length>0)
+                        {
+                            foreach (var item in info)
+                            {
+                                if(item.MemberType==MemberTypes.Property)
+                                {
+                                    IsStatic = false;
+                                    currentType = (item as PropertyInfo).PropertyType;
+                                    break;
+                                }
+                                else if (item.MemberType == MemberTypes.Method)
+                                {
+                                    IsStatic = false;
+                                    currentType = (item as MethodInfo).ReturnType;
+                                    break;
+                                }
+                                else if (item.MemberType == MemberTypes.Field)
+                                {
+                                    IsStatic = false;
+                                    currentType = (item as FieldInfo).FieldType;
+                                    break;
+                                }
+                                else if (item.MemberType == MemberTypes.Event)
+                                {
+                                    IsStatic = false;
+                                    currentType = (item as EventInfo).EventHandlerType;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (currentType.BaseType != null)
+                            {
+                                currentType = currentType.BaseType;
+                                goto re;
+                            }
+                        }
+                    }
+
+                    return currentType;
+                }
+                else if(defDir.ContainsKey(root))
+                {
+                    IsStatic = false;
+
+                    Type currentType = defDir[root];
+
+                    for (int i = 1; i < tp.Count; i++)
+                    {
+                        string member = tp[i].Value;
+
+                      re:
+                        MemberInfo[] info = currentType.GetMember(member);
+
+                        if (info.Length > 0)
+                        {
+                            foreach (var item in info)
+                            {
+                                if (item.MemberType == MemberTypes.Property)
+                                {
+                                    IsStatic = false;
+                                    currentType = (item as PropertyInfo).PropertyType;
+                                    break;
+                                }
+                                else if (item.MemberType == MemberTypes.Method)
+                                {
+                                    IsStatic = false;
+                                    currentType = (item as MethodInfo).ReturnType;
+                                    break;
+                                }
+                                else if (item.MemberType == MemberTypes.Field)
+                                {
+                                    IsStatic = false;
+                                    currentType = (item as FieldInfo).FieldType;
+                                    break;
+                                }
+                                else if (item.MemberType == MemberTypes.Event)
+                                {
+                                    IsStatic = false;
+                                    currentType = (item as EventInfo).EventHandlerType;
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if(currentType.BaseType!=null)
+                            {
+                                currentType = currentType.BaseType;
+                                goto re;
+                            }
+                        }
+                    }
+
+                    return currentType;
+                }
+                else
+                    return null;
+            }
+
+        }
+
+        private string GetGetConstructorsStr(Type type)
+        {
+            var consturct = type.GetConstructors();
+
+            string txt = "";
+
+            foreach (var item in consturct)
+            {
+                txt +="\r\n"+item.ToString();
+
+            }
+
+            return txt;
+
+        }
+
+
+        private string GetGetMethodstr(Type type)
+        {
+            var method = type.GetMethods();
+
+            string txt = "";
+
+            foreach (var item in method)
+            {
+                txt += "\r\n" + item.ToString();
+
+            }
+
+            return txt;
+
         }
 
         public void AugmentCompletionSession(ICompletionSession session, IList<CompletionSet> completionSets)
@@ -793,8 +941,7 @@ namespace OokLanguage
             {
                 string currentTxt = linetxt;
                 bool isStatic = true;
-                byte chueck = 0;
-                tp:
+              
                 string lstr = currentTxt.Substring(0, currentTxt.Length - 1);
                 int lastindex = lstr.LastIndexOfAny(indexchar);
                 lastindex++;
@@ -816,15 +963,18 @@ namespace OokLanguage
                 }
                 else
                 {
-                    currentTxt = linetxt.Substring(0, linetxt.LastIndexOf(cmd));
-                    if (currentTxt.Length > 0)
-                    {
-                        chueck++;
-                        isStatic = false;
+                    
+                    var ret = GetRx(linetxt,out isStatic);
 
-                        if(chueck<50)
-                            goto tp;
+                    if(ret!=null)
+                    {
+                        foreach (var member in GetTypeMembers(ret, isStatic))
+                        {
+                            completions.Add(new Completion(member.Name, member.Name, member.type + "\r\n" + member.info, null, ""));
+                        }
                     }
+                  
+
                 }
 
 
@@ -844,10 +994,7 @@ namespace OokLanguage
 
                 string currentTxt = linetxt;
                 bool isStatic = true;
-                byte chueck = 0;
-                
-                tp:
-
+              
                 string lstr = currentTxt.Substring(0, currentTxt.Length - 1);
                 int lastindex = lstr.LastIndexOfAny(indexchar);
                 lastindex++;
@@ -870,14 +1017,14 @@ namespace OokLanguage
                 }
                 else
                 {
-                    currentTxt = linetxt.Substring(0, linetxt.LastIndexOf(cmd));
-                    if (currentTxt.Length > 0)
-                    {
-                        chueck++;
-                        isStatic = false;
+                    var ret = GetRx(linetxt, out isStatic);
 
-                        if (chueck < 50)
-                            goto tp;
+                    if (ret != null)
+                    {
+                        foreach (var member in GetTypeMethods(ret, isStatic))
+                        {
+                            completions.Add(new Completion(member.Name, member.Name, member.type + "\r\n" + member.info, null, ""));
+                        }
                     }
                 }
 
@@ -912,15 +1059,24 @@ namespace OokLanguage
 
                     }
 
-                    var dirlist = TypeDir.Keys.Where(p => p.ToLower().IndexOf(cmd) == 0);
+                    var dirlist = TypeDir.Where(p => p.Key.ToLower().IndexOf(cmd) == 0);
 
                     if (dirlist.Count() > 0)
                     {
                         foreach (var str in dirlist)
                         {
-                            completions.Add(new Completion(str));
+                            completions.Add(new Completion(str.Key,str.Key,str.Value.ToString()+ GetGetConstructorsStr(str.Value), null,null));
                         }
+                    }
 
+                    var deflist = defDir.Where(p => p.Key.ToLower().IndexOf(cmd) == 0);
+
+                    if (deflist.Count() > 0)
+                    {
+                        foreach (var str in deflist)
+                        {
+                            completions.Add(new Completion(str.Key, str.Key, str.Value.ToString() + GetGetConstructorsStr(str.Value), null, null));
+                        }
                     }
                 }
 

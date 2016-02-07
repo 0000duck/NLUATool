@@ -84,7 +84,7 @@ namespace OokLanguage
             _ookTypes["print"] = OokTokenTypes.keyword;
             _ookTypes["require"] = OokTokenTypes.keyword;
 
-            _ookTypes["CLRPackage"]= OokTokenTypes.call;
+            _ookTypes["clrpackage"]= OokTokenTypes.call;
             _ookTypes["pcall"] = OokTokenTypes.call;
             _ookTypes["math"] = OokTokenTypes.call;
             _ookTypes["assert"] = OokTokenTypes.call;
@@ -120,6 +120,17 @@ namespace OokLanguage
             _ookTypes["tostring"] = OokTokenTypes.call;
             _ookTypes["ipairs"] = OokTokenTypes.call;
             _ookTypes["pairs"] = OokTokenTypes.call;
+            _ookTypes["makegenerictype"] = OokTokenTypes.call;
+
+            _ookTypes["luanet"] = OokTokenTypes.call;
+            _ookTypes["import_type"] = OokTokenTypes.call;
+            _ookTypes["namespace"] = OokTokenTypes.call;
+            _ookTypes["make_array"] = OokTokenTypes.call;
+            _ookTypes["each"] = OokTokenTypes.call;
+            _ookTypes["load_assembly"] = OokTokenTypes.call;
+            _ookTypes["callgenricmethod"] = OokTokenTypes.call;
+
+
         }
 
         public event EventHandler<SnapshotSpanEventArgs> TagsChanged
@@ -144,7 +155,7 @@ namespace OokLanguage
                 foreach (string ookToken in tokens)
                 {
 
-                    string[] valuesp = ookToken.Split(new char[] { '\t', '\n', '\r', ' ', '(', ')', '{', '}', ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] valuesp = ookToken.Split(new char[] { '\t', '\n', '\r', ' ','.', '(', ')', '{', '}', ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
 
                     foreach (var item in valuesp)
                     {
