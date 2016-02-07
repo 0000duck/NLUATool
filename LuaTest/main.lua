@@ -12,7 +12,6 @@ print(m);
 
 local x = SocketClient();
 
-
 if (x:Connect("www.baidu.com", 80) == true) then
     x.BinaryInput:Add(
     function(data)
@@ -28,7 +27,3 @@ if (x:Connect("www.baidu.com", 80) == true) then
 else
     Console.WriteLine("无法连接服务器");
 end
-
-
-
-
