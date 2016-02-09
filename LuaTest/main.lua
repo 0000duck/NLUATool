@@ -14,8 +14,8 @@ local x = SocketClient();
 
 if (x:Connect("www.baidu.com", 80) == true) then
     x.BinaryInput:Add(
-    function(data)
-        local html = Encoding.Default:GetString(data)
+    function(arg)		
+        local html = Encoding.Default:GetString(arg)
         Console.WriteLine(html);
         x:Close();
     end);

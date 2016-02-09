@@ -1,21 +1,29 @@
-import "N:\\NLUA\\VsTool\\NLUATool\\LuaTest\\ZYSocketFrame.dll"
-import "N:\\NLUA\\VsTool\\NLUATool\\LuaTest\\ZYSocketShare.dll"
-import "N:\\NLUA\\VsTool\\NLUATool\\LuaTest\\testClass.dll";
+DllPath = "E:\\ZYSocketFrame2\\北风之神SOCKET框架(ZYSocket)DLL\\"
+DllPath2 = "E:\\ZYSocketFrame2\\例1(V2)\\testClass\\bin\\Debug\\"
+
+
+import(DllPath .. "ZYSocketFrame.dll", "ZYSocket.Server")
+import(DllPath .. "ZYSocketShare.dll", "ZYSocket.share")
+import(DllPath2 .. "testClass.dll", "testClass");
 import "System"
 import "System.Net.Sockets"
-import "ZYSocket.share"
-import "ZYSocket.Server"
 import "System.Text"
-import "testClass"
+
+
+
 
 server = ZYSocketSuper("any", 9982, 5000, 1024 * 1024);
 
+
 function DataOn(data, e)
+    --@ e = SocketAsyncEventArgs
+    --@ data=Array	
     local read = ReadBytesV2(data);
     local b, lengt = read:ReadInt32();
 
     if(read.Length == lengt) then
         local b, cmd = read:ReadInt32();
+
 
         if(cmd == 1000) then
             local temp, err = CallGenricMethod(read, "ReadObject", luanet.make_array(Object, { luanet.import_type('testClass.PPo')}));
@@ -42,8 +50,6 @@ function DataOn(data, e)
 end
 
 
-
-
 function BinaryInputHandler(data, offset, count, socketAsync)
     if(socketAsync.UserToken == nil) then
         socketAsync.UserToken = ZYNetRingBufferPoolV2(4096000);
@@ -62,6 +68,8 @@ function BinaryInputHandler(data, offset, count, socketAsync)
     end
 
 end
+
+
 
 function ConnectionFilter(socketAsyn)
     Console.WriteLine("UserConn {0}", socketAsyn.AcceptSocket.RemoteEndPoint:ToString());

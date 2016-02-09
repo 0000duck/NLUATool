@@ -121,7 +121,7 @@ namespace OokLanguage
                         case VSConstants.VSStd2KCmdID.TYPECHAR:
                             char ch = GetTypeChar(pvaIn);
 
-                            if(ch=='.'||ch==':')
+                            if(ch=='.'||ch==':'||ch=='=')
                             {
                                 if (_currentSession != null)
                                     Cancel();
@@ -181,7 +181,14 @@ namespace OokLanguage
         {
             if (_currentSession == null)
                 return;
-            
+
+            if(TextView.Caret.Position.BufferPosition<=showPost)
+            {
+                showPost = 0;
+                _currentSession.Dismiss();
+                return;
+            }
+
             _currentSession.SelectedCompletionSet.SelectBestMatch();
             _currentSession.SelectedCompletionSet.Recalculate();
         }
@@ -222,6 +229,9 @@ namespace OokLanguage
             }
         }
 
+
+        private int showPost = 0;
+
         /// <summary>
         /// Display list of potential tokens
         /// </summary>
@@ -232,6 +242,8 @@ namespace OokLanguage
 
             SnapshotPoint caret = TextView.Caret.Position.BufferPosition;
             ITextSnapshot snapshot = caret.Snapshot;
+           
+            showPost = caret.Position;
 
             if (!Broker.IsCompletionActive(TextView))
             {

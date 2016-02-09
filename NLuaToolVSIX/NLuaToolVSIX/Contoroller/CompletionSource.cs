@@ -66,6 +66,7 @@ namespace OokLanguage
         private  List<string> LocalDir = new List<string>();
 
         private ConcurrentDictionary<string, Type> TypeDir = new ConcurrentDictionary<string, Type>();
+        private ConcurrentDictionary<string, string> PathDir = new ConcurrentDictionary<string, string>();
         private ConcurrentDictionary<string, Assembly> AssDir = new ConcurrentDictionary<string, Assembly>();
 
         private ConcurrentDictionary<string, Type> defDir = new ConcurrentDictionary<string, Type>();
@@ -136,12 +137,89 @@ namespace OokLanguage
         }
 
 
+        public void LoadingNameSpace(string dllpath,string namespaces)
+        {
+            namespaces = namespaces.Trim(new char[] { ' ', '\t',';', '"' });
+
+            dllpath = dllpath.Trim(new char[] { ' ', '\t', ';', '"' });
+
+          
+
+
+            Assembly types = null;
+
+            if (File.Exists(dllpath))
+            {
+                byte[] data = File.ReadAllBytes(Path.GetFullPath(dllpath));
+                types = Assembly.Load(data);
+
+
+                foreach (var item in types.GetTypes())
+                {
+                    if (!AssDir.ContainsKey(item.Namespace))
+                    {
+                        AssDir.TryAdd(item.Namespace, types);
+                    }
+                }              
+            }
+            else
+            {
+                if (dllpath.IndexOf("..") > 0)
+                {
+                    string[] lp = dllpath.Split(new string[] { ".." }, StringSplitOptions.RemoveEmptyEntries);
+
+                    dllpath = lp[lp.Length - 1];
+
+                    dllpath = dllpath.Trim(new char[] { ' ', '\t', ';', '"' });
+
+
+                    if (PathDir.Count > 0)
+                    {
+                        foreach (var item in PathDir.Values)
+                        {
+                            string newpath = item + dllpath;
+
+                            if (File.Exists(newpath))
+                            {
+                                byte[] data = File.ReadAllBytes(Path.GetFullPath(newpath));
+                                types = Assembly.Load(data);
+
+
+                                foreach (var itemx in types.GetTypes())
+                                {
+                                    if (!AssDir.ContainsKey(itemx.Namespace))
+                                    {
+                                        AssDir.TryAdd(itemx.Namespace, types);
+                                    }
+                                }
+
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            
+            if(types==null)
+             types = GetAssembly(namespaces);
+
+            if (types == null)
+            {
+                types = typeof(String).Assembly;
+                LoadingNameSpace(types, namespaces);
+            }
+            else
+            {
+                LoadingNameSpace(types, namespaces);
+            }
+        }
+
         public void LoadingNameSpace(string namespaces)
         {
 
-            namespaces = namespaces.Trim();
-            namespaces = namespaces.Trim(';');
-            namespaces = namespaces.Trim('"');
+            namespaces = namespaces.Trim(new char[] { ' ', '\t', ';', '"' });
+
 
 
 
@@ -160,6 +238,42 @@ namespace OokLanguage
                 }
 
                 return;
+            }
+            else
+            {
+                if (namespaces.IndexOf("..") > 0)
+                {
+                    string[] lp = namespaces.Split(new string[] { ".." }, StringSplitOptions.RemoveEmptyEntries);
+
+                    string dllpath = lp[lp.Length - 1];
+
+                    dllpath = dllpath.Trim(new char[] { ' ', '\t', ';', '"' });
+                    if (PathDir.Count > 0)
+                    {
+                        foreach (var item in PathDir.Values)
+                        {
+                            string newpath = item + dllpath;
+
+                            if (File.Exists(newpath))
+                            {
+                                byte[] data = File.ReadAllBytes(Path.GetFullPath(newpath));
+                                var type = Assembly.Load(data);
+
+
+                                foreach (var itemx in type.GetTypes())
+                                {
+                                    if (!AssDir.ContainsKey(itemx.Namespace))
+                                    {
+                                        AssDir.TryAdd(itemx.Namespace, type);
+                                    }
+                                }
+
+                                return;
+                            }
+                        }
+                    }
+                }
+
             }
 
 
@@ -571,6 +685,7 @@ namespace OokLanguage
                             typeMembers.Clear();
                             typeMethods.Clear();
                             defDir.Clear();
+                            PathDir.Clear();
                         }
                     }
                     else if (!string.IsNullOrEmpty(item.NewText) && string.IsNullOrEmpty(item.OldText))
@@ -630,6 +745,50 @@ namespace OokLanguage
 
         }
 
+
+        SyntaxKind[] defpath = new SyntaxKind[]
+        {
+              SyntaxKind.Identifier,
+              SyntaxKind.AssignmentOperator,
+              SyntaxKind.String
+        };
+
+        private bool CheckDefpath(List<Token> token)
+        {
+            if (token.Count < defpath.Length)
+                return false;
+
+            bool isDef = true;
+            for (int i = 0; i < defpath.Length; i++)
+            {
+                if (token[i].Kind != defpath[i])
+                {
+                    isDef = false;
+                    break;
+                }
+            }
+
+            if (isDef)
+            {
+                Token Name = token[0];
+                Token type = token[2];
+
+                string path = type.Text.Trim();
+                path = path.Trim(new char[] { '"', ';', ' ', '\t' });
+
+                if (Directory.Exists(path))
+                {
+                    PathDir[Name.Text] = path;
+                    return true;
+                }
+                return false;
+               
+            }
+
+            return false;
+
+        }
+
         SyntaxKind[] defvar = new SyntaxKind[]
           {
               SyntaxKind.Identifier,
@@ -659,9 +818,10 @@ namespace OokLanguage
                 if(TypeDir.ContainsKey(type.Text))
                 {
                     defDir[Name.Text] = TypeDir[type.Text];
+                    return true;
                 }
 
-                return true;
+                return false;
             }
 
             return false;
@@ -675,21 +835,42 @@ namespace OokLanguage
             {
                 task = new System.Threading.Tasks.Task(() =>
                   {
-                                          
+                      System.Diagnostics.Stopwatch e = new System.Diagnostics.Stopwatch();
+                      e.Start();
+
                       foreach (var line in txtCache.Get(_buffer.CurrentSnapshot).Lines)
                       {
                           string txt = line.Text;
 
+
                           if (txt.IndexOf("import") >= 0)
                           {
-                              var rx = Regex.Matches(txt, "(?<=import[ ,\t]).+");
+                              var rxtow = Regex.Matches(txt, "(?<=\\bimport\\b\\s*\\(\\s*).+?,[^\\)]+(?=\\))");
+
+
+                              foreach (Match item in rxtow)
+                              {
+                                  if (item.Success)
+                                  {
+                                      string[] sp = item.Value.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                                      if (sp.Length == 2)
+                                      {
+                                          LoadingNameSpace(sp[0], sp[1]);
+                                      }
+
+                                  }
+                              }
+
+
+
+                              var rx = Regex.Matches(txt, "(?<=\\bimport\\b\\s+\")[^\"]+(?=\")");
 
                               foreach (Match item in rx)
                               {
                                   if (item.Success)
-                                  {
-                                      string val = item.Value.Trim(' ', '\t', '"');
-                                      LoadingNameSpace(val);
+                                  {                                     
+                                      LoadingNameSpace(item.Value);
 
                                   }
                               }
@@ -698,9 +879,9 @@ namespace OokLanguage
                           {
                               List<Token> token = new List<Token>();
 
-                              if (line.Text.Trim().IndexOf("--@") == 0)
+                              if (line.Text.IndexOf("--@") >= 0)
                               {
-                                  var x = Regex.Match(line.Text, "[\\w ]+=[ \\w]+");
+                                  var x = Regex.Match(line.Text, "(?<=\\s*--@\\s*)\\b\\w+\\b\\s*=\\s*\\b\\w+\\b");
 
                                   if (x.Success)
                                   {
@@ -716,9 +897,12 @@ namespace OokLanguage
                               {
                                   if (token[0].Kind == SyntaxKind.Identifier)
                                   {
-                                      CheckDef(token);
+                                      if(!CheckDef(token))
+                                      {
+                                          CheckDefpath(token);
+                                      }
 
-                                  }
+                                  }                                 
                                   else if (token[0].Kind == SyntaxKind.LocalKeyword)
                                   {
                                       ChecklocalDef(token);
@@ -728,8 +912,11 @@ namespace OokLanguage
                           }
 
 
-  
+
                       }
+
+
+                      e.Stop();
 
                       task = null;
                   });
