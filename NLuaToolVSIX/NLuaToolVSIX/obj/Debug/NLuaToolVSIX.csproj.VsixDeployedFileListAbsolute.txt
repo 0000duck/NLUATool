@@ -3,4 +3,12 @@ C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\
 C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\ImmutableObjectGraph.dll
 C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\LanguageService.dll
 C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\Validation.dll
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\NLuaToolVSIX.pkgdef
 C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\extension.vsixmanifest
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\EngineRegistration.pkgdef
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\LuaLanguageServiceThemes.pkgdef
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\LuaDetour\\LuaDebug32.dll
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\LuaDetour\\LuaDetours.dll
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\Resources\\NLuaToolVSIX.ico
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\Microsoft.VisualStudio.Debugger.Lua.dll
+C:\Users\luyikk\AppData\Local\Microsoft\VisualStudio\14.0Exp\Extensions\Company\NLuaToolVSIX\1.0\\Microsoft.VisualStudio.Debugger.Lua.pdb

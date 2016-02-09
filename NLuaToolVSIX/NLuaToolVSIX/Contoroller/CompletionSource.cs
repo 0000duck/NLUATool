@@ -147,7 +147,9 @@ namespace OokLanguage
 
             if (File.Exists(namespaces))
             {
-                var ass = Assembly.LoadFile(namespaces);
+                byte[] data = File.ReadAllBytes(Path.GetFullPath(namespaces));
+                var ass = Assembly.Load(data);
+               
 
                 foreach (var item in ass.GetTypes())
                 {
